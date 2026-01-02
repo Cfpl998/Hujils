@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>澎湃系统1.1 - 账户查询中心</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft Yahei", "Arial", sans-serif;
+        }
+        body {
+            background: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 0;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+        .header h1 {
+            font-size: 32px;
+            color: #1e40af;
+            margin-bottom: 10px;
+        }
+        .header p {
+            font-size: 16px;
+            color: #666;
+        }
+        .func-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+        .func-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .func-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+        }
+        .func-card i {
+            font-size: 40px;
+            color: #1e40af;
+            margin-bottom: 20px;
+        }
+        .func-card h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: #2d3748;
+        }
+        .func-card p {
+            font-size: 14px;
+            color: #718096;
+        }
+        /* 弹窗样式 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            display: none;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: #fff;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            padding: 30px;
+            position: relative;
+        }
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 20px;
+            color: #999;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .modal-close:hover {
+            color: #333;
+        }
+        .modal-title {
+            font-size: 22px;
+            color: #1e40af;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #4a5568;
+            font-weight: 500;
+        }
+        .form-control {
+            width: 100%;
+            height: 45px;
+            padding: 0 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #1e40af;
+            box-shadow: 0 0 0 3px rgba(30,64,175,0.1);
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        .btn {
+            width: 100%;
+            height: 48px;
+            background: #1e40af;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #1a365d;
+        }
+        .result-container {
+            margin-top: 25px;
+            padding: 20px;
+            border: 1px solid #e8f4f8;
+            border-radius: 6px;
+            background: #f0f8fb;
+            display: none;
+        }
+        .result-container.active {
+            display: block;
+        }
+        .result-title {
+            font-size: 16px;
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        .result-item {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .result-label {
+            width: 100px;
+            font-size: 14px;
+            color: #718096;
+        }
+        .result-value {
+            flex: 1;
+            font-size: 14px;
+            color: #2d3748;
+            font-weight: 500;
+        }
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+            margin-top: 80px;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>澎湃系统1.1</h1>
+            <p>高效便捷的账户查询与信息核验中心</p>
+        </div>
+
+        <div class="func-grid">
+            <!-- 手机号开户 -->
+            <div class="func-card" onclick="openModal('phoneModal')">
+                <i class="fa fa-mobile"></i>
+                <h3>手机号开户</h3>
+                <p>输入手机号快速完成开户信息核验</p>
+            </div>
+            <!-- 详细开 -->
+            <div class="func-card" onclick="openModal('detailModal')">
+                <i class="fa fa-list-alt"></i>
+                <h3>详细开户</h3>
+                <p>填写完整信息完成精准开户登记</p>
+            </div>
+            <!-- 二要素核验 -->
+            <div class="func-card" onclick="openModal('twoFactorModal')">
+                <i class="fa fa-id-card"></i>
+                <h3>二要素核验</h3>
+                <p>姓名+证件号快速核验身份信息</p>
+            </div>
+            <!-- 三要素核验 -->
+            <div class="func-card" onclick="openModal('threeFactorModal')">
+                <i class="fa fa-user-circle"></i>
+                <h3>三要素核验</h3>
+                <p>证件号核验姓名与手机号信息</p>
+            </div>
+        </div>
+
+        <!-- 手机号开户弹窗 -->
+        <div class="modal" id="phoneModal">
+            <div class="modal-content">
+                <span class="modal-close" onclick="closeAllModals()">&times;</span>
+                <h2 class="modal-title">手机号开户信息核验</h2>
+                <div class="form-group">
+                    <label for="phoneNum">手机号码</label>
+                    <input type="tel" id="phoneNum" class="form-control" placeholder="请输入11位手机号码" maxlength="11">
+                </div>
+                <button class="btn" onclick="handlePhoneSubmit()">确认核验</button>
+                <div class="result-container" id="phoneResult">
+                    <div class="result-title">核验结果</div>
+                    <div class="result-item">
+                        <div class="result-label">手机号码：</div>
+                        <div class="result-value" id="resultPhone"></div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">归属地：</div>
+                        <div class="result-value" id="resultLocation"></div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">开户姓名：</div>
+                        <div class="result-value" id="resultName"></div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">证件号码：</div>
+                        <div class="result-value" id="resultIdCard"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 详细开户弹窗 -->
+        <div class="modal" id="detailModal">
+            <div class="modal-content">
+                <span class="modal-close" onclick="closeAllModals()">&times;</span>
+                <h2 class="modal-title">详细开户登记</h2>
+                <div class="form-group">
+                    <label for="detailName">开户姓名</label>
+                    <input type="text" id="detailName" class="form-control" placeholder="请输入真实姓名">
+                </div>
+                <div class="form-group">
+                    <label for="detailAddress">户籍地址</label>
+                    <input type="text" id="detailAddress" class="form-control" placeholder="请输入户籍地址">
+                </div>
+                <div class="form-group">
+                    <label>出生日期</label>
+                    <div class="form-row">
+                        <input type="number" id="birthYear" class="form-control" placeholder="年" maxlength="4">
+                        <input type="number" id="birthMonth" class="form-control" placeholder="月" maxlength="2" min="1" max="12">
+                        <input type="number" id="birthDay" class="form-control" placeholder="日" maxlength="2" min="1" max="31">
+                    </div>
+                </div>
+                <button class="btn" onclick="handleDetailSubmit()">提交开户</button>
+                <div class="result-container" id="detailResult">
+                    <div class="result-title">开户信息确认</div>
+                    <div class="result-item">
+                        <div class="result-label">开户姓名：</div>
+                        <div class="result-value" id="detailResultName"></div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">户籍地址：</div>
+                        <div class="result-value" id="detailResultAddress"></div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">出生日期：</div>
+                        <div class="result-value" id="detailResultBirth"></div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">证件号码：</div>
+                        <div class="result-value" id="detailResultIdCard"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 二要素核验弹窗 -->
+        <div class="modal" id="twoFactorModal">
+            <div class="modal-content">
+                <span class="modal-close" onclick="closeAllModals()">&times;</span>
+                <h2 class="modal-title">二要素身份核验</h2>
+                <div class="form-group">
+                    <label for="twoFactorName">姓名</label>
+                    <input type="text" id="twoFactorName" class="form-control" placeholder="请输入姓名">
+                </div>
+                <div class="form-group">
+                    <label for="twoFactorIdCard">证件号码</label>
+                    <input type="text" id="twoFactorIdCard" class="form-control" placeholder="请输入身份证号码" maxlength="18">
+                </div>
+                <button class="btn" onclick="handleTwoFactorSubmit()">确认核验</button>
+                <div class="result-container" id="twoFactorResult">
+                    <div class="result-title">核验结果</div>
+                    <div class="result-item">
+                        <div class="result-label">姓名：</div>
+                        <div class="result-value" id="twoFactorResultName"></div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">证件号码：</div>
+                        <div class="result-value" id="twoFactorResultIdCard"></div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">核验状态：</div>
+                        <div class="result-value" id="twoFactorResultStatus" style="color: #10b981;">核验通过</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 三要素核验弹窗 -->
+        <div class="modal" id="threeFactorModal">
+            <div class="modal-content">
+                <span class="modal-close" onclick="closeAllModals()">&times;</span>
+                <h2 class="modal-title">三要素身份核验</h2>
+                <div class="form-group">
+                    <label for="threeFactorIdCard">证件号码</label>
+                    <input type="text" id="threeFactorIdCard" class="form-control" placeholder="请输入身份证号码" maxlength="18">
+                </div>
+                <button class="btn" onclick="handleThreeFactorSubmit()">确认核验</button>
+                <div class="result-container" id="threeFactorResult">
+                    <div class="result-title">核验结果</div>
+                    <div class="result-item">
+                        <div class="result-label">姓名：</div>
+                        <div class="result-value" id="threeFactorResultName"></div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">证件号码：</div>
+                        <div class="result-value" id="threeFactorResultIdCard"></div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">手机号码：</div>
+                        <div class="result-value" id="threeFactorResultPhone"></div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">核验状态：</div>
+                        <div class="result-value" id="threeFactorResultStatus" style="color: #10b981;">核验通过</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            澎湃系统 © 2026 版权所有 | 隐私保护 | 服务条款
+        </div>
+    </div>
+
+    <script>
+        // 本地存储键前缀，避免冲突
+        const STORAGE_PREFIX = 'pengpai_system_1.1_';
+
+        // 手机号段-归属地映射（简化版）
+        const PHONE_PREFIX_MAP = {
+            '130': '河北省-石家庄市', '131': '北京市-北京市', '132': '上海市-上海市',
+            '133': '广东省-广州市', '134': '河南省-郑州市', '135': '广东省-深圳市',
+            '136': '江苏省-南京市', '137': '浙江省-杭州市', '138': '山东省-济南市',
+            '139': '四川省-成都市', '150': '湖北省-武汉市', '151': '湖南省-长沙市',
+            '152': '辽宁省-沈阳市', '153': '广西省-南宁市', '155': '山东省-青岛市',
+            '156': '江苏省-苏州市', '157': '浙江省-宁波市', '158': '福建省-福州市',
+            '159': '广东省-东莞市', '170': '北京市-北京市', '171': '上海市-上海市',
+            '172': '广东省-广州市', '173': '四川省-成都市', '174': '浙江省-杭州市',
+            '175': '山东省-济南市', '176': '江苏省-南京市', '177': '湖北省-武汉市',
+            '178': '湖南省-长沙市', '180': '辽宁省-大连市', '181': '福建省-厦门市',
+            '182': '河南省-洛阳市', '183': '河北省-唐山市', '184': '四川省-绵阳市',
+            '185': '广东省-佛山市', '186': '山东省-烟台市', '187': '浙江省-温州市',
+            '188': '江苏省-无锡市', '189': '广东省-中山市'
+        };
+
+        // 常见姓氏和名字
+        const SURNAME_LIST = ['张', '李', '王', '刘', '陈', '杨', '赵', '黄', '周', '吴', '徐', '孙', '胡', '朱', '高'];
+        const NAME_LIST = ['伟', '强', '敏', '静', '丽', '杰', '涛', '芳', '军', '艳', '明', '峰', '磊', '婷', '超'];
+
+        // 地址码映射（简化版，前6位身份证地址码）
+        const ADDRESS_CODE_MAP = {
+            '北京市': '110000', '上海市': '310000', '天津市': '120000', '重庆市': '500000',
+            '河北省': '130000', '山西省': '140000', '辽宁省': '210000', '吉林省': '220000',
+            '黑龙江省': '230000', '江苏省': '320000', '浙江省': '330000', '安徽省': '340000',
+            '福建省': '350000', '江西省': '360000', '山东省': '370000', '河南省': '410000',
+            '湖北省': '420000', '湖南省': '430000', '广东省': '440000', '海南省': '460000',
+            '四川省': '510000', '贵州省': '520000', '云南省': '530000', '陕西省': '610000',
+            '甘肃省': '620000', '青海省': '630000', '台湾省': '710000', '内蒙古': '150000',
+            '广西省': '450000', '西藏省': '540000', '宁夏省': '640000', '新疆省': '650000'
+        };
+
+        // 打开弹窗
+        function openModal(modalId) {
+            closeAllModals();
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        // 关闭所有弹窗
+        function closeAllModals() {
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => modal.classList.remove('active'));
+            // 清空结果显示
+            document.querySelectorAll('.result-container').forEach(container => container.classList.remove('active'));
+        }
+
+        // 生成随机姓名
+        function generateRandomName() {
+            const surname = SURNAME_LIST[Math.floor(Math.random() * SURNAME_LIST.length)];
+            const name = NAME_LIST[Math.floor(Math.random() * NAME_LIST.length)];
+            return surname + name;
+        }
+
+        // 根据归属地生成证件号（简化规则：地址码+出生日期+4位随机数+校验码）
+        function generateIdCard(location, birthDate = '') {
+            // 解析归属地省份
+            const province = location.split('-')[0];
+            const addressCode = ADDRESS_CODE_MAP[province] || '110000';
+            // 生成随机出生日期（如果未提供）
+            let birth = birthDate;
+            if (!birth) {
+                const year = Math.floor(1980 + Math.random() * 30);
+                const month = String(Math.floor(1 + Math.random() * 12)).padStart(2, '0');
+                const day = String(Math.floor(1 + Math.random() * 28)).padStart(2, '0');
+                birth = `${year}${month}${day}`;
+            }
+            // 4位随机顺序码
+            const orderCode = String(Math.floor(1000 + Math.random() * 9000));
+            // 随机校验码（0-9,X）
+            const checkCode = ['0','1','2','3','4','5','6','7','8','9','X'][Math.floor(Math.random() * 11)];
+            return addressCode + birth + orderCode + checkCode;
+        }
+
+        // 根据地址生成地址码
+        function getAddressCodeFromAddress(address) {
+            for (const [province, code] of Object.entries(ADDRESS_CODE_MAP)) {
+                if (address.includes(province)) {
+                    return code;
+                }
+            }
+            return '110000'; // 默认北京
+        }
+
+        // 手机号开户提交处理
+        function handlePhoneSubmit() {
+            const phone = document.getElementById('phoneNum').value.trim();
+            if (!/^1[3-9]\d{9}$/.test(phone)) {
+                alert('请输入有效的11位手机号码');
+                return;
+            }
+
+            const storageKey = STORAGE_PREFIX + 'phone_' + phone;
+            // 检查本地存储是否有该手机号信息
+            const storedData = localStorage.getItem(storageKey);
+            if (storedData) {
+                const data = JSON.parse(storedData);
+                showPhoneResult(data);
+                return;
+            }
+
+            // 生成归属地
+            const prefix = phone.substring(0, 3);
+            let location = PHONE_PREFIX_MAP[prefix] || '北京市-北京市';
+            // 生成姓名和证件号
+            const name = generateRandomName();
+            const idCard = generateIdCard(location);
+
+            // 存储到本地
+            const data = { phone, location, name, idCard };
+            localStorage.setItem(storageKey, JSON.stringify(data));
+            showPhoneResult(data);
+        }
+
+        // 显示手机号开户结果
+        function showPhoneResult(data) {
+            document.getElementById('resultPhone').textContent = data.phone;
+            document.getElementById('resultLocation').textContent = data.location;
+            document.getElementById('resultName').textContent = data.name;
+            document.getElementById('resultIdCard').textContent = data.idCard;
+            document.getElementById('phoneResult').classList.add('active');
+        }
+
+        // 详细开户提交处理
+        function handleDetailSubmit() {
+            const name = document.getElementById('detailName').value.trim();
+            const address = document.getElementById('detailAddress').value.trim();
+            const year = document.getElementById('birthYear').value.trim();
+            const month = document.getElementById('birthMonth').value.trim();
+            const day = document.getElementById('birthDay').value.trim();
+
+            if (!name || !address || !year || !month || !day) {
+                alert('请填写完整信息');
+                return;
+            }
+            if (year.length !== 4 || isNaN(year) || month < 1 || month > 12 || day < 1 || day > 31) {
+                alert('请填写有效的出生日期');
+                return;
+            }
+
+            // 生成存储键（姓名+出生日期，确保唯一性）
+            const birth = `${year}${String(month).padStart(2, '0')}${String(day).padStart(2, '0')}`;
+            const storageKey = STORAGE_PREFIX + 'detail_' + name + '_' + birth;
+            const storedData = localStorage.getItem(storageKey);
+
+            if (storedData) {
+                const data = JSON.parse(storedData);
+                showDetailResult(data);
+                return;
+            }
+
+            // 生成证件号
+            const addressCode = getAddressCodeFromAddress(address);
+            const idCard = generateIdCard('', birth);
+            const birthDisplay = `${year}年${month}月${day}日`;
+
+            // 存储到本地
+            const data = { name, address, birth: birthDisplay, idCard };
+            localStorage.setItem(storageKey, JSON.stringify(data));
+            showDetailResult(data);
+        }
+
+        // 显示详细开户结果
+        function showDetailResult(data) {
+            document.getElementById('detailResultName').textContent = data.name;
+            document.getElementById('detailResultAddress').textContent = data.address;
+            document.getElementById('detailResultBirth').textContent = data.birth;
+            document.getElementById('detailResultIdCard').textContent = data.idCard;
+            document.getElementById('detailResult').classList.add('active');
+        }
+
+        // 二要素核验提交处理
+        function handleTwoFactorSubmit() {
+            const name = document.getElementById('twoFactorName').value.trim();
+            const idCard = document.getElementById('twoFactorIdCard').value.trim();
+
+            if (!name || !/^\d{17}[\dXx]$/.test(idCard)) {
+                alert('请输入有效的姓名和身份证号码');
+                return;
+            }
+
+            const storageKey = STORAGE_PREFIX + 'two_factor_' + idCard;
+            const storedData = localStorage.getItem(storageKey);
+
+            if (storedData) {
+                const data = JSON.parse(storedData);
+                showTwoFactorResult(data);
+                return;
+            }
+
+            // 存储到本地
+            const data = { name, idCard };
+            localStorage.setItem(storageKey, JSON.stringify(data));
+            showTwoFactorResult(data);
+        }
+
+        // 显示二要素核验结果
+        function showTwoFactorResult(data) {
+            document.getElementById('twoFactorResultName').textContent = data.name;
+            document.getElementById('twoFactorResultIdCard').textContent = data.idCard;
+            document.getElementById('twoFactorResult').classList.add('active');
+        }
+
+        // 三要素核验提交处理
+        function handleThreeFactorSubmit() {
+            const idCard = document.getElementById('threeFactorIdCard').value.trim();
+
+            if (!/^\d{17}[\dXx]$/.test(idCard)) {
+                alert('请输入有效的身份证号码');
+                return;
+            }
+
+            const storageKey = STORAGE_PREFIX + 'three_factor_' + idCard;
+            const storedData = localStorage.getItem(storageKey);
+
+            if (storedData) {
+                const data = JSON.parse(storedData);
+                showThreeFactorResult(data);
+                return;
+            }
+
+            // 从身份证解析地址和出生日期生成相关信息
+            const addressCode = idCard.substring(0, 6);
+            const birth = idCard.substring(6, 14);
+            const birthYear = birth.substring(0, 4);
+            // 生成姓名和手机号
+            const name = generateRandomName();
+            // 生成符合规则的手机号（13-19开头）
+            const phonePrefix = Object.keys(PHONE_PREFIX_MAP)[Math.floor(Math.random() * Object.keys(PHONE_PREFIX_MAP).length)];
+            const phone = phonePrefix + String(Math.floor(10000000 + Math.random() * 90000000));
+
+            // 存储到本地
+            const data = { name, idCard, phone };
+            localStorage.setItem(storageKey, JSON.stringify(data));
+            showThreeFactorResult(data);
+        }
+
+        // 显示三要素核验结果
+        function showThreeFactorResult(data) {
+            document.getElementById('threeFactorResultName').textContent = data.name;
+            document.getElementById('threeFactorResultIdCard').textContent = data.idCard;
+            document.getElementById('threeFactorResultPhone').textContent = data.phone;
+            document.getElementById('threeFactorResult').classList.add('active');
+        }
+
+        // 点击空白处关闭弹窗
+        window.onclick = function(event) {
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => {
+                if (event.target === modal) {
+                    modal.classList.remove('active');
+                    document.querySelectorAll('.result-container').forEach(container => container.classList.remove('active'));
+                }
+            });
+        };
+    </script>
+</body>
+</html>
